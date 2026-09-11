@@ -1,0 +1,28 @@
+// use prisma-next
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt temporal.updatedAt() @map("updated_at")
+  skills    Skill[]
+
+  @@map("users")
+}
+
+model Skill {
+  id          Int      @id @default(autoincrement())
+  name        VarChar(100)
+  description VarChar(500)
+  content     String
+  isPublic    Boolean  @default(true) @map("is_public")
+  authorId    Int      @map("author_id")
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   temporal.updatedAt() @map("updated_at")
+
+  @@map("skills")
+}
+

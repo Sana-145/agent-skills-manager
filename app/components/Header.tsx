@@ -41,7 +41,7 @@ export default function Header() {
           </ul>
         </div>
         <Link href="/" className="btn btn-ghost text-xl">
-          🤖 Agent Skills
+          ⚙️ Agent Skills
         </Link>
       </div>
       <div className="navbar-center hidden lg:flex">

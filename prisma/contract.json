@@ -43,11 +43,8 @@
               "description": {
                 "nullable": false,
                 "type": {
-                  "codecId": "sql/varchar@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "length": 500
-                  }
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
                 }
               },
               "id": {
@@ -67,11 +64,8 @@
               "name": {
                 "nullable": false,
                 "type": {
-                  "codecId": "sql/varchar@1",
-                  "kind": "scalar",
-                  "typeParams": {
-                    "length": 100
-                  }
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
                 }
               },
               "updatedAt": {
@@ -85,6 +79,7 @@
             "relations": {
               "author": {
                 "cardinality": "N:1",
+                "nullable": false,
                 "on": {
                   "localFields": [
                     "authorId"
@@ -248,12 +243,9 @@
                   "nullable": false
                 },
                 "description": {
-                  "codecId": "sql/varchar@1",
-                  "nativeType": "character varying",
-                  "nullable": false,
-                  "typeParams": {
-                    "length": 500
-                  }
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
@@ -274,12 +266,9 @@
                   "nullable": false
                 },
                 "name": {
-                  "codecId": "sql/varchar@1",
-                  "nativeType": "character varying",
-                  "nullable": false,
-                  "typeParams": {
-                    "length": 100
-                  }
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
                 },
                 "updated_at": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -385,7 +374,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "ead3cda6249d5ea034ba8b71b532e9236c627379fe6d145e5f6d59c592984ab9"
+    "storageHash": "1a180e5b40975bd92c8c8e945802618b1b2fea5425ea2c73b97f6297414b0e51"
   },
   "execution": {
     "executionHash": "c85dd8b164e7ec520737bd33255b7feffd2b4be88672e3c78027fd18f903af90",

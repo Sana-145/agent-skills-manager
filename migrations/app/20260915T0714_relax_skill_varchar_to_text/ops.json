@@ -1,0 +1,158 @@
+[
+  {
+    "id": "data_migration.typechange-skills-description",
+    "label": "Data transform: typechange-skills-description",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-skills-description has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"skills\" WHERE \"description\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-skills-description",
+        "sql": "UPDATE \"public\".\"skills\" SET \"description\" = $1, \"updated_at\" = $2 WHERE \"description\" IS NULL",
+        "params": [
+          "",
+          "2026-09-15T12:38:44.173923046Z"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-skills-description resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"skills\" WHERE \"description\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ]
+  },
+  {
+    "id": "alterType.skills.description",
+    "label": "Alter type of \"skills\".\"description\" to text",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "description",
+        "table": "skills"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"description\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "skills",
+          "description"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"description\"",
+        "sql": "ALTER TABLE \"public\".\"skills\" ALTER COLUMN \"description\" TYPE text USING \"description\"::text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"description\" has type \"text\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "skills",
+          "description",
+          "text"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  },
+  {
+    "id": "data_migration.typechange-skills-name",
+    "label": "Data transform: typechange-skills-name",
+    "operationClass": "data",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [
+      {
+        "description": "Check typechange-skills-name has work to do",
+        "sql": "SELECT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"skills\" WHERE \"name\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ],
+    "execute": [
+      {
+        "description": "Run typechange-skills-name",
+        "sql": "UPDATE \"public\".\"skills\" SET \"name\" = $1, \"updated_at\" = $2 WHERE \"name\" IS NULL",
+        "params": [
+          "",
+          "2026-09-15T12:38:44.180924173Z"
+        ]
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "Verify typechange-skills-name resolved all violations",
+        "sql": "SELECT NOT EXISTS (SELECT \"id\" AS \"id\" FROM \"public\".\"skills\" WHERE \"name\" IS NULL LIMIT 1) AS ok",
+        "params": []
+      }
+    ]
+  },
+  {
+    "id": "alterType.skills.name",
+    "label": "Alter type of \"skills\".\"name\" to text",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "name",
+        "table": "skills"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"name\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": [
+          "public",
+          "skills",
+          "name"
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "alter type of \"name\"",
+        "sql": "ALTER TABLE \"public\".\"skills\" ALTER COLUMN \"name\" TYPE text USING \"name\"::text"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"name\" has type \"text\"",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_attribute\" AS \"a\" INNER JOIN \"pg_class\" AS \"c\" ON \"c\".\"oid\" = \"a\".\"attrelid\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"relnamespace\" WHERE (\"n\".\"nspname\" = $1 AND \"c\".\"relname\" = $2 AND \"a\".\"attname\" = $3 AND (format_type(\"a\".\"atttypid\", \"a\".\"atttypmod\")) = $4 AND NOT (\"a\".\"attisdropped\"))) AS \"result\"",
+        "params": [
+          "public",
+          "skills",
+          "name",
+          "text"
+        ]
+      }
+    ],
+    "meta": {
+      "warning": "TABLE_REWRITE"
+    }
+  }
+]

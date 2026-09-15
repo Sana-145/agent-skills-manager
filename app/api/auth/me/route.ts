@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
   if (!token) {
     return NextResponse.json({ user: null }, { status: 401 });
   }
-
   const payload = verifyToken(token);
   if (!payload) {
     return NextResponse.json({ user: null }, { status: 401 });

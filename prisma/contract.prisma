@@ -14,8 +14,8 @@ model User {
 
 model Skill {
   id          Int      @id @default(autoincrement())
-  name        VarChar(100)
-  description VarChar(500)
+  name        String
+  description String
   content     String
   isPublic    Boolean  @default(true) @map("is_public")
   authorId    Int      @map("author_id")

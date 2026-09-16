@@ -1,7 +1,4 @@
-export default function RegisterPage() {
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen py-2">
-            <h1 className="text-4xl font-bold underline">About</h1>
-        </div>
-    );
+export default function AboutPage() {
+  console.log('AboutPage')
+  return <div>This is the about page</div>;
 }

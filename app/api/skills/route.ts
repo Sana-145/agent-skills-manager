@@ -16,10 +16,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Changed: also select "content" (for copy / download / preview)
+    // and "updatedAt".
     const skills = await db.orm.public.Skill
       .where({ authorId: payload.userId })
       .orderBy((skill) => skill.createdAt.desc())
-      .select("id", "name", "description", "isPublic", "createdAt")
+      .select("id", "name", "description", "content", "isPublic", "createdAt", "updatedAt")
       .all();
 
     return NextResponse.json({ skills });

@@ -1,29 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { deleteSkill } from "@/actions/skills";
+import SkillCard, { type SkillCardData } from "@/components/SkillCard";
 
-interface Skill {
-  id: number;
-  name: string;
-  description: string;
-  isPublic: boolean;
-  createdAt: string;
-}
+type Filter = "all" | "public" | "private";
 
 /**
- * Dashboard Page - Client Component with httpOnly Cookie Auth
- * Uses cookies (sent automatically) for authentication
+ * Dashboard - Client Component with httpOnly cookie auth.
+ * The filter buttons double as the stats: they show how many skills are
+ * in each group.
  */
 export default function DashboardPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [skills, setSkills] = useState<Skill[]>([]);
+  const [skills, setSkills] = useState<SkillCardData[]>([]);
   const [loadingSkills, setLoadingSkills] = useState(true);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [query, setQuery] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -32,160 +31,191 @@ export default function DashboardPage() {
   }, [isLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    if (user) {
-      fetchUserSkills();
-    }
+    if (!user) return;
+    const fetchUserSkills = async () => {
+      try {
+        const response = await fetch("/api/skills", { credentials: "include" });
+        if (response.ok) {
+          const data = await response.json();
+          setSkills(data.skills || []);
+        } else {
+          setError("Couldn't load your skills. Refresh the page to try again.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch skills:", err);
+        setError("Couldn't load your skills. Check your connection and refresh.");
+      } finally {
+        setLoadingSkills(false);
+      }
+    };
+    fetchUserSkills();
   }, [user]);
 
-  const fetchUserSkills = async () => {
-    try {
-      // Cookies are automatically sent with fetch
-      const response = await fetch("/api/skills", {
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSkills(data.skills || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch skills:", error);
-    } finally {
-      setLoadingSkills(false);
-    }
-  };
-
   const handleDelete = async (id: number) => {
-    if (!user || !confirm("Are you sure you want to delete this skill?")) {
-      return;
-    }
+    if (!user || !confirm("Delete this skill? This can't be undone.")) return;
 
     setDeletingId(id);
+    setError("");
     try {
-      const result = await deleteSkill(id, user.id);
+      const result = await deleteSkill(id);
       if (result.success) {
-        setSkills(skills.filter((s) => s.id !== id));
+        setSkills((prev) => prev.filter((s) => s.id !== id));
       } else {
-        alert(result.error || "Failed to delete skill");
+        setError(result.error || "Couldn't delete the skill.");
       }
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("Failed to delete skill");
+    } catch (err) {
+      console.error("Delete error:", err);
+      setError("Couldn't delete the skill. Try again.");
     } finally {
       setDeletingId(null);
     }
   };
 
+  const counts = useMemo(
+    () => ({
+      all: skills.length,
+      public: skills.filter((s) => s.isPublic).length,
+      private: skills.filter((s) => !s.isPublic).length,
+    }),
+    [skills]
+  );
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return skills.filter((s) => {
+      if (filter === "public" && !s.isPublic) return false;
+      if (filter === "private" && s.isPublic) return false;
+      if (!q) return true;
+      return s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q);
+    });
+  }, [skills, filter, query]);
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <span className="loading loading-spinner loading-lg" />
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
+
+  const filters: { key: Filter; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "public", label: "Public" },
+    { key: "private", label: "Private" },
+  ];
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto px-4 py-10">
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-base-content/70 mt-1">
-            Welcome back, {user?.name}!
+          <h1 className="text-4xl font-bold">My skills</h1>
+          <p className="mt-2 text-base-content/75">
+            Signed in as {user?.name}. Public skills appear in the gallery; private ones stay here.
           </p>
         </div>
         <Link href="/dashboard/skills/new" className="btn btn-primary">
-          + Create Skill
+          New skill
         </Link>
-      </div>
+      </header>
 
-      <div className="stats shadow mb-8">
-        <div className="stat">
-          <div className="stat-title">Total Skills</div>
-          <div className="stat-value">{skills.length}</div>
+      {error && (
+        <div className="alert alert-error mb-6" role="alert">
+          <span>{error}</span>
         </div>
-        <div className="stat">
-          <div className="stat-title">Public</div>
-          <div className="stat-value text-primary">
-            {skills.filter((s) => s.isPublic).length}
-          </div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Private</div>
-          <div className="stat-value text-secondary">
-            {skills.filter((s) => !s.isPublic).length}
-          </div>
-        </div>
-      </div>
+      )}
 
-      <h2 className="text-xl font-semibold mb-4">Your Skills</h2>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="join" role="group" aria-label="Filter by visibility">
+          {filters.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setFilter(key)}
+              aria-pressed={filter === key}
+              className={`btn btn-sm join-item ${filter === key ? "btn-neutral" : ""}`}
+            >
+              {label}
+              <span className="font-mono text-xs opacity-70">{counts[key]}</span>
+            </button>
+          ))}
+        </div>
+
+        <label className="input input-sm w-full sm:max-w-xs">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-4 w-4 opacity-60"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search your skills"
+            aria-label="Search your skills"
+          />
+        </label>
+      </div>
 
       {loadingSkills ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="card bg-base-200">
-              <div className="card-body">
-                <div className="skeleton h-6 w-3/4"></div>
-                <div className="skeleton h-4 w-full mt-2"></div>
-                <div className="skeleton h-8 w-24 mt-4"></div>
-              </div>
+            <div key={i} className="space-y-3 rounded-box border border-base-300 p-4">
+              <div className="skeleton h-4 w-1/2" />
+              <div className="skeleton h-6 w-3/4" />
+              <div className="skeleton h-4 w-full" />
+              <div className="skeleton h-4 w-2/3" />
             </div>
           ))}
         </div>
       ) : skills.length === 0 ? (
-        <div className="text-center py-12 bg-base-200 rounded-lg">
-          <div className="text-4xl mb-4">📝</div>
-          <h3 className="text-lg font-semibold mb-2">No skills yet</h3>
-          <p className="text-base-content/70 mb-4">
-            Create your first agent skill to get started
+        <div className="rounded-box border border-dashed border-base-content/30 px-6 py-14 text-center">
+          <h2 className="text-lg font-semibold">You haven&apos;t created a skill yet</h2>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-base-content/70">
+            Write your first SKILL.md and it will show up here.
           </p>
-          <Link href="/dashboard/skills/new" className="btn btn-primary">
-            Create Skill
+          <Link href="/dashboard/skills/new" className="btn btn-primary btn-sm mt-4">
+            Create your first skill
           </Link>
         </div>
+      ) : visible.length === 0 ? (
+        <div className="rounded-box border border-dashed border-base-content/30 px-6 py-12 text-center">
+          <h2 className="text-lg font-semibold">No skills match</h2>
+          <p className="mt-1 text-sm text-base-content/70">
+            Try a different search or switch the visibility filter.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setFilter("all");
+            }}
+            className="btn btn-sm mt-4"
+          >
+            Clear filters
+          </button>
+        </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {skills.map((skill) => (
-            <div key={skill.id} className="card bg-base-200">
-              <div className="card-body">
-                <div className="flex justify-between items-start">
-                  <h3 className="card-title text-lg">{skill.name}</h3>
-                  <div
-                    className={`badge ${skill.isPublic ? "badge-success" : "badge-ghost"}`}
-                  >
-                    {skill.isPublic ? "Public" : "Private"}
-                  </div>
-                </div>
-                <p className="text-base-content/70 text-sm line-clamp-2">
-                  {skill.description}
-                </p>
-                <div className="card-actions justify-end mt-4">
-                  <Link
-                    href={`/dashboard/skills/${skill.id}/edit`}
-                    className="btn btn-ghost btn-sm"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(skill.id)}
-                    className="btn btn-error btn-sm btn-outline"
-                    disabled={deletingId === skill.id}
-                  >
-                    {deletingId === skill.id ? (
-                      <span className="loading loading-spinner loading-xs"></span>
-                    ) : (
-                      "Delete"
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {visible.map((skill) => (
+            <SkillCard
+              key={skill.id}
+              skill={skill}
+              onDelete={handleDelete}
+              isDeleting={deletingId === skill.id}
+            />
           ))}
         </div>
       )}
     </div>
   );
 }
+

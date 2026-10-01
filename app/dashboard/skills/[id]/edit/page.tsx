@@ -96,7 +96,6 @@ export default function EditSkillPage({ params }: PageProps) {
           content: content.trim(),
           isPublic,
         },
-        user.id
       );
 
       if (result.success) {

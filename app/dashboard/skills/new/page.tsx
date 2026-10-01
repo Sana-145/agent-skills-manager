@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -20,9 +20,15 @@ export default function NewSkillPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isLoading && !isAuthenticated) {
-    router.push("/login");
-    return null;
+  // Redirect if already authenticated (in an effect, never during render)
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  if (isAuthenticated) {
+    return null; // redirecting
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,7 +50,6 @@ export default function NewSkillPage() {
           content: content.trim(),
           isPublic,
         },
-        user!.id
       );
 
       if (result.success) {

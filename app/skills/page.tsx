@@ -1,78 +1,53 @@
-import Link from "next/link";
 import { db } from "@/prisma/db";
+import SkillsExplorer from "@/components/SkillsExplorer";
+import type { SkillCardData } from "@/components/SkillCard";
+import { toIso } from "@/lib/skill-utils";
 
 /**
- * Skills Gallery - ISR (Incremental Static Regeneration)
- * Revalidates every 60 seconds for fresh content
+ * Skills gallery - ISR (Incremental Static Regeneration).
+ * Rebuilt at most once a minute; your server actions also call
+ * revalidatePath("/skills"), so new skills appear right after saving.
  */
 export const revalidate = 60;
 
 export const metadata = {
-  title: "Browse Skills | Agent Skills Manager",
-  description: "Explore public AI agent skills created by the community",
+  title: "Browse skills | Agent Skills",
+  description: "Explore public SKILL.md files shared by the community",
 };
 
 async function getPublicSkills() {
-  const skills = await db.orm.public.Skill
+  return db.orm.public.Skill
     .where({ isPublic: true })
     .orderBy((skill) => skill.createdAt.desc())
     .include("author")
     .all();
-  return skills;
 }
 
 export default async function SkillsPage() {
   const skills = await getPublicSkills();
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Public Skills Gallery</h1>
-          <p className="text-base-content/70 mt-2">
-            This page uses ISR - revalidates every 60 seconds
-          </p>
-        </div>
-        <div className="badge badge-secondary badge-lg">ISR: 60s</div>
-      </div>
+  // Only plain, serializable values can be passed to the client component.
+  const cards: SkillCardData[] = skills.map((skill) => ({
+    id: skill.id,
+    name: skill.name,
+    description: skill.description,
+    content: skill.content,
+    isPublic: true,
+    createdAt: toIso(skill.createdAt),
+    authorName: skill.author.name,
+  }));
 
-      {skills.length === 0 ? (
-        <div className="text-center py-16">
-          <div className="text-6xl mb-4">📭</div>
-          <h2 className="text-xl font-semibold mb-2">No skills yet</h2>
-          <p className="text-base-content/70 mb-4">
-            Be the first to create a skill!
-          </p>
-          <Link href="/register" className="btn btn-primary">
-            Get Started
-          </Link>
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {skills.map((skill) => (
-            <Link
-              key={skill.id}
-              href={`/skills/${skill.id}`}
-              className="card bg-base-200 shadow-xl hover:shadow-2xl transition-shadow"
-            >
-              <div className="card-body">
-                <h2 className="card-title">{skill.name}</h2>
-                <p className="text-base-content/70 line-clamp-2">
-                  {skill.description}
-                </p>
-                <div className="card-actions justify-between items-center mt-4">
-                  <span className="text-sm text-base-content/60">
-                    by {skill.author.name}
-                  </span>
-                  <span className="text-xs text-base-content/50">
-                    {skill.createdAt.toLocaleString(undefined, { dateStyle: "medium" })}
-                  </span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+  return (
+    <div className="container mx-auto px-4 py-10">
+      <header className="mb-8 max-w-2xl">
+        <h1 className="text-4xl font-bold">Browse skills</h1>
+        <p className="mt-2 text-base-content/75">
+          Public SKILL.md files shared here. Preview one, then copy it or download it into your
+          agent&apos;s skills folder.
+        </p>
+      </header>
+
+      <SkillsExplorer skills={cards} />
     </div>
   );
 }

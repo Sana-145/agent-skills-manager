@@ -1,30 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { bricolage, jetbrainsMono } from "./fonts";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Providers } from "@/components/Providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Agent Skills Manager",
+  title: "Agent Skills",
   description:
-    "Create, manage, and share AI agent skills. A Next.js demo showcasing SSG, SSR, ISR, and CSR patterns with Prisma and DaisyUI.",
+    "Write, keep and share SKILL.md files for your AI coding agents. Keep them private or publish them to a public gallery.",
   openGraph: {
-    title: "Agent Skills Manager",
-    description: "Create, manage, and share AI agent skills publicly",
+    title: "Agent Skills",
+    description: "Write, keep and share SKILL.md files for your AI coding agents.",
     type: "website",
   },
 };
+
+// Runs before first paint so a saved theme choice doesn't flash the wrong colors.
+const themeScript = `try{var t=localStorage.getItem("skills-theme");if(t==="skillslight"||t==="skillsdark"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}`;
 
 export default function RootLayout({
   children,
@@ -32,10 +25,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
-      >
+    // No fixed data-theme here: the theme comes from the saved choice,
+    // or from the visitor's system setting on their first visit.
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${bricolage.variable} ${jetbrainsMono.variable}`}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="flex min-h-screen flex-col font-sans antialiased">
         <Providers>
           <Header />
           <main className="flex-1">{children}</main>

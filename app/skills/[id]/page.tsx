@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/prisma/db";
+import SkillActions from "@/components/SkillActions";
+import { formatDate, slugify, toIso } from "@/lib/skill-utils";
 
 /**
- * Skill Detail Page - Dynamic Route with ISR
- * Uses [id] dynamic segment and revalidates every 60 seconds
+ * Skill detail page - dynamic route ([id]) with ISR.
+ * Revalidates every 60 seconds.
  */
 export const revalidate = 60;
 
@@ -14,27 +16,33 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
+  const skillId = parseInt(id);
+  if (Number.isNaN(skillId)) return { title: "Skill not found" };
+
+  // Only public skills: a private skill's name shouldn't leak through the tab title.
   const skill = await db.orm.public.Skill
-    .where({ id: parseInt(id) })
+    .where({ id: skillId, isPublic: true })
     .select("name", "description")
     .first();
 
   if (!skill) {
-    return { title: "Skill Not Found" };
+    return { title: "Skill not found" };
   }
 
   return {
-    title: `${skill.name} | Agent Skills Manager`,
+    title: `${skill.name} | Agent Skills`,
     description: skill.description,
   };
 }
 
 async function getSkill(id: string) {
-  const skill = await db.orm.public.Skill
-    .where({ id: parseInt(id), isPublic: true })
+  const skillId = parseInt(id);
+  if (Number.isNaN(skillId)) return null;
+
+  return db.orm.public.Skill
+    .where({ id: skillId, isPublic: true })
     .include("author")
     .first();
-  return skill;
 }
 
 export default async function SkillDetailPage({ params }: PageProps) {
@@ -45,40 +53,40 @@ export default async function SkillDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const slug = slugify(skill.name);
+  const lineCount = skill.content.split("\n").length;
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="mb-6">
-        <Link href="/skills" className="btn btn-ghost btn-sm gap-2">
-          ← Back to Skills
-        </Link>
-      </div>
+    <div className="container mx-auto max-w-4xl px-4 py-10">
+      <Link href="/skills" className="btn btn-ghost btn-sm mb-6">
+        Back to all skills
+      </Link>
 
-      <article className="card bg-base-200 shadow-xl">
-        <div className="card-body">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold">{skill.name}</h1>
-              <p className="text-base-content/70 mt-2">{skill.description}</p>
-            </div>
-            <div className="badge badge-secondary">ISR</div>
-          </div>
+      <article>
+        <header className="mb-6">
+          <p className="font-mono text-sm text-base-content/60">{slug}/SKILL.md</p>
+          <h1 className="mt-1 text-4xl font-bold">{skill.name}</h1>
+          <p className="mt-3 max-w-2xl text-lg text-base-content/75">{skill.description}</p>
 
-          <div className="divider"></div>
-
-          <div className="flex gap-4 text-sm text-base-content/60 mb-4">
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-base-content/60">
             <span>By {skill.author.name}</span>
-            <span>•</span>
-            <span>Created {skill.createdAt.toLocaleString(undefined, { dateStyle: "medium" })}</span>
-            <span>•</span>
-            <span>Updated {skill.updatedAt.toLocaleString(undefined, { dateStyle: "medium" })}</span>
+            <span>Added {formatDate(toIso(skill.createdAt))}</span>
+            <span>Updated {formatDate(toIso(skill.updatedAt))}</span>
           </div>
+        </header>
 
-          <div className="bg-base-300 rounded-lg p-6">
-            <h2 className="text-lg font-semibold mb-4">Skill Content</h2>
-            <pre className="skill-content whitespace-pre-wrap text-sm">
-              {skill.content}
-            </pre>
+        <div className="mb-4">
+          <SkillActions name={skill.name} content={skill.content} />
+        </div>
+
+        <div className="overflow-hidden rounded-box border border-base-300">
+          <div className="flex items-center justify-between border-b border-base-300 bg-base-200 px-4 py-2 font-mono text-xs text-base-content/70">
+            <span>SKILL.md</span>
+            <span>{lineCount} lines</span>
           </div>
+          <pre className="overflow-x-auto whitespace-pre-wrap bg-base-100 p-5 font-mono text-sm leading-relaxed">
+            {skill.content}
+          </pre>
         </div>
       </article>
     </div>

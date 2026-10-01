@@ -1,69 +1,103 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+/**
+ * Landing page - SSG (Static Site Generation).
+ * No data fetching, so it is built once at compile time.
+ */
+
+const SAMPLE_SKILL = `---
+name: commit-message-writer
+description: Writes clear commit messages from a staged diff.
+---
+
+# Commit message writer
+
+When asked for a commit message:
+
+1. Read the staged diff, not the whole repo.
+2. Start with a short summary line in the imperative.
+3. Add a body only if the "why" isn't obvious.
+`;
+
+const STEPS = [
+  {
+    title: "Write it",
+    body: "Use the editor to write a SKILL.md: a name, a one-line description, and the instructions your agent should follow.",
+  },
+  {
+    title: "Choose who sees it",
+    body: "Keep a skill private while you refine it, or make it public so it appears in the gallery.",
+  },
+  {
+    title: "Take it with you",
+    body: "Open any skill you own, or any public one, then copy it or download it into your agent's skills folder.",
+  },
+];
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div>
+      {/* Hero: the thing this site is about is a file, so show the file */}
+      <section className="border-b border-base-300">
+        <div className="container mx-auto grid items-center gap-10 px-4 py-16 lg:grid-cols-2 lg:py-24">
+          <div>
+            <h1 className="text-5xl font-bold leading-[1.05] sm:text-6xl">
+              A shelf for your agent skills
+            </h1>
+            <p className="mt-6 max-w-xl text-lg text-base-content/75">
+              Write SKILL.md files for your AI coding agents, keep them private or share them
+              publicly, and grab any skill when you need it.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/skills" className="btn btn-primary btn-lg">
+                Browse skills
+              </Link>
+              <Link href="/register" className="btn btn-outline btn-lg">
+                Create an account
+              </Link>
+            </div>
+          </div>
+
+          <div
+            className="overflow-hidden rounded-box border border-base-300 bg-base-100"
+            aria-label="Example SKILL.md file"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div className="flex items-center justify-between border-b border-base-300 bg-base-200 px-4 py-2 font-mono text-xs text-base-content/70">
+              <span>commit-message-writer/SKILL.md</span>
+              <span className="flex items-center gap-1.5 font-sans font-medium text-primary">
+                <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+                Public
+              </span>
+            </div>
+            <pre className="overflow-x-auto p-5 font-mono text-sm leading-relaxed">
+              {SAMPLE_SKILL}
+            </pre>
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* How it works: a real sequence, so numbering is meaningful here */}
+      <section className="container mx-auto px-4 py-16">
+        <h2 className="text-3xl font-bold">How it works</h2>
+        <ol className="mt-8 grid gap-6 md:grid-cols-3">
+          {STEPS.map((step, index) => (
+            <li key={step.title} className="border-t-2 border-primary pt-4">
+              <p className="font-mono text-sm text-base-content/60">Step {index + 1}</p>
+              <h3 className="mt-1 text-xl font-semibold">{step.title}</h3>
+              <p className="mt-2 text-base-content/75">{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="border-t border-base-300 bg-base-200">
+        <div className="container mx-auto flex flex-col items-start justify-between gap-4 px-4 py-10 sm:flex-row sm:items-center">
+          <p className="text-xl font-semibold">Have a skill worth keeping? Add it in a minute.</p>
+          <Link href="/dashboard/skills/new" className="btn btn-primary">
+            New skill
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
